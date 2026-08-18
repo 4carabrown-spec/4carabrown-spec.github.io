@@ -1,0 +1,1412 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>no true name</title>
+    <style>
+      :root {
+        --gray: #c0c0c0;
+        --gray-dark: #808080;
+        --gray-darker: #404040;
+        --gray-light: #dfdfdf;
+        --white: #ffffff;
+        --black: #000000;
+        --titlebar-a: #000080;
+        --titlebar-b: #1084d0;
+        --titlebar-inactive-a: #808080;
+        --titlebar-inactive-b: #b5b5b5;
+        --desktop: #8d1818;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        font-family: Tahoma, "MS Sans Serif", Geneva, Arial, sans-serif;
+        font-size: 12px;
+        overflow: hidden;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      body {
+        background: var(--desktop);
+        position: relative;
+        height: 100vh;
+        width: 100vw;
+      }
+
+      /* ---------- boot screen ---------- */
+      #boot {
+        position: fixed;
+        inset: 0;
+        background: #000;
+        color: #c0c0c0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        font-family: "Courier New", monospace;
+        cursor: pointer;
+      }
+      #boot .line {
+        opacity: 0;
+        white-space: pre;
+        font-size: 14px;
+        line-height: 1.6em;
+      }
+      #boot .cursor {
+        display: inline-block;
+        width: 8px;
+        height: 14px;
+        background: #c0c0c0;
+        animation: blink 1s steps(1) infinite;
+        vertical-align: -2px;
+      }
+      @keyframes blink {
+        50% {
+          opacity: 0;
+        }
+      }
+      #boot .hint {
+        margin-top: 30px;
+        font-size: 11px;
+        color: #808080;
+        opacity: 0;
+      }
+
+      /* ---------- CRT overlay ---------- */
+      #crt {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 5000;
+        background: repeating-linear-gradient(
+          to bottom,
+          rgba(0, 0, 0, 0.08) 0px,
+          rgba(0, 0, 0, 0.08) 1px,
+          rgba(0, 0, 0, 0) 2px,
+          rgba(0, 0, 0, 0) 3px
+        );
+        mix-blend-mode: multiply;
+        opacity: 0.5;
+      }
+
+      /* ---------- desktop icons ---------- */
+      #desktop-icons {
+        position: absolute;
+        top: 14px;
+        left: 14px;
+        z-index: 1;
+        display: grid;
+        grid-template-columns: 76px;
+        grid-auto-rows: 76px;
+        gap: 4px;
+      }
+      .icon {
+        width: 72px;
+        height: 74px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding-top: 4px;
+        cursor: pointer;
+        border: 1px dotted transparent;
+      }
+      .icon:focus,
+      .icon.selected {
+        border: 1px dotted #fff;
+        background: rgba(0, 0, 80, 0.28);
+      }
+      .icon .glyph {
+        font-size: 30px;
+        line-height: 1;
+        filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.5));
+        margin-bottom: 4px;
+      }
+      .icon .label {
+        color: #fff;
+        text-align: center;
+        font-size: 11px;
+        line-height: 1.2em;
+        text-shadow: 1px 1px 1px #000;
+        padding: 1px 2px;
+        max-width: 72px;
+      }
+      .icon.selected .label {
+        background: #000080;
+      }
+
+      /* ---------- windows ---------- */
+      .win {
+        position: absolute;
+        background: var(--gray);
+        border: 2px solid;
+        border-color: var(--white) var(--gray-darker) var(--gray-darker)
+          var(--white);
+        box-shadow: 1px 1px 0 #000;
+        display: flex;
+        flex-direction: column;
+        min-width: 180px;
+        min-height: 120px;
+      }
+      .win.hidden {
+        display: none;
+      }
+      .title-bar {
+        background: linear-gradient(
+          90deg,
+          var(--titlebar-inactive-a),
+          var(--titlebar-inactive-b)
+        );
+        color: #d4d0c8;
+        padding: 3px 3px 3px 6px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: default;
+        font-weight: bold;
+        letter-spacing: 0.3px;
+      }
+      .title-bar.active {
+        background: linear-gradient(
+          90deg,
+          var(--titlebar-a),
+          var(--titlebar-b)
+        );
+        color: #fff;
+      }
+      .title-bar .t-left {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+      .title-bar .t-icon {
+        font-size: 13px;
+      }
+      .title-bar .t-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 12px;
+      }
+      .t-buttons {
+        display: flex;
+        gap: 2px;
+      }
+      .t-btn {
+        width: 16px;
+        height: 14px;
+        background: var(--gray);
+        border: 1px solid;
+        border-color: var(--white) var(--gray-darker) var(--gray-darker)
+          var(--white);
+        font-size: 10px;
+        line-height: 12px;
+        text-align: center;
+        font-weight: bold;
+        color: #000;
+        cursor: pointer;
+        padding: 0;
+      }
+      .t-btn:active {
+        border-color: var(--gray-darker) var(--white) var(--white)
+          var(--gray-darker);
+      }
+      .menu-bar {
+        display: flex;
+        gap: 12px;
+        padding: 2px 6px;
+        border-bottom: 1px solid var(--gray-dark);
+        background: var(--gray);
+        font-size: 12px;
+      }
+      .menu-bar span {
+        cursor: default;
+      }
+      .menu-bar span:hover {
+        background: var(--titlebar-a);
+        color: #fff;
+      }
+      .win-body {
+        flex: 1;
+        overflow: auto;
+        background: var(--white);
+        margin: 2px;
+        border: 1px solid;
+        border-color: var(--gray-darker) var(--white) var(--white)
+          var(--gray-darker);
+        padding: 10px;
+        font-size: 12px;
+        line-height: 1.5em;
+        color: #111;
+      }
+      .win-body.grey-bg {
+        background: var(--gray);
+      }
+      .win-body h2 {
+        margin: 0 0 8px;
+        font-size: 14px;
+        border-bottom: 1px solid var(--gray-dark);
+        padding-bottom: 4px;
+      }
+      .resize-handle {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        width: 14px;
+        height: 14px;
+        cursor: nwse-resize;
+      }
+
+      /* ---------- buttons / inputs, 98-ish ---------- */
+      .btn98 {
+        background: var(--gray);
+        border: 2px solid;
+        border-color: var(--white) var(--gray-darker) var(--gray-darker)
+          var(--white);
+        padding: 4px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        font-family: inherit;
+        color: #000;
+      }
+      .btn98:active {
+        border-color: var(--gray-darker) var(--white) var(--white)
+          var(--gray-darker);
+      }
+      fieldset.gbox {
+        border: 1px solid var(--gray-darker);
+        border-top-color: var(--white);
+        border-left-color: var(--white);
+        margin: 8px 0;
+        padding: 8px;
+      }
+      fieldset.gbox legend {
+        padding: 0 4px;
+      }
+      table.retro {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      table.retro th {
+        background: var(--gray);
+        border: 1px solid var(--gray-darker);
+        padding: 4px 6px;
+        text-align: left;
+      }
+      table.retro td {
+        border: 1px solid var(--gray-dark);
+        padding: 4px 6px;
+      }
+      table.retro tr:nth-child(even) td {
+        background: #eeeeee;
+      }
+      a.link98 {
+        color: #0000ee;
+      }
+      a.link98:visited {
+        color: #0000ee;
+      }
+      .track-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 3px 4px;
+        border-bottom: 1px dotted var(--gray-dark);
+      }
+      .track-row:hover {
+        background: #000080;
+        color: #fff;
+      }
+      .stream-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 10px;
+      }
+      .member-card {
+        display: flex;
+        gap: 10px;
+        padding: 8px;
+        border: 1px solid var(--gray-dark);
+        margin-bottom: 8px;
+        background: #f4f4f4;
+        cursor: pointer;
+      }
+      .member-card:hover {
+        background: #e7e7ff;
+      }
+      .member-card .avatar {
+        font-size: 34px;
+        width: 44px;
+        text-align: center;
+      }
+      .member-card h3 {
+        margin: 0 0 3px;
+        font-size: 13px;
+      }
+      .member-card p {
+        margin: 0;
+        font-size: 11.5px;
+        color: #333;
+      }
+      .bio-shot {
+        width: 100%;
+        height: 100%;
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .bio-shot img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+      .polaroid {
+        background: #fff;
+        border: 1px solid var(--gray-dark);
+        padding: 6px 6px 18px;
+        box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+      }
+      .polaroid .frame {
+        height: 80px;
+        border: 1px solid #999;
+      }
+      .polaroid .cap {
+        font-size: 10.5px;
+        text-align: center;
+        margin-top: 5px;
+        color: #333;
+      }
+      .inbox-toolbar {
+        display: flex;
+        gap: 6px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--gray-dark);
+        margin-bottom: 8px;
+      }
+      .social-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 4px 2px;
+        border-bottom: 1px solid #ddd;
+      }
+      .folder-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px;
+        cursor: pointer;
+      }
+      .folder-item:hover {
+        background: #000080;
+        color: #fff;
+      }
+      .folder-detail {
+        margin-top: 8px;
+        padding: 8px;
+        background: #ffffe1;
+        border: 1px solid var(--gray-dark);
+        display: none;
+      }
+      #identity-out {
+        margin-top: 10px;
+        padding: 10px;
+        background: #000;
+        color: #0f0;
+        font-family: "Courier New", monospace;
+        min-height: 60px;
+        white-space: pre-wrap;
+      }
+
+      /* ---------- taskbar ---------- */
+      #taskbar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 34px;
+        background: var(--gray);
+        border-top: 2px solid var(--white);
+        display: flex;
+        align-items: center;
+        padding: 3px;
+        gap: 4px;
+        z-index: 4000;
+      }
+      #start-btn {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-weight: bold;
+        padding: 3px 10px 3px 6px;
+      }
+      #start-btn .flag {
+        font-size: 15px;
+      }
+      #task-buttons {
+        flex: 1;
+        display: flex;
+        gap: 4px;
+        overflow: hidden;
+        height: 100%;
+      }
+      .task-btn {
+        background: var(--gray);
+        border: 2px solid;
+        border-color: var(--white) var(--gray-darker) var(--gray-darker)
+          var(--white);
+        font-size: 11.5px;
+        padding: 2px 8px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        max-width: 160px;
+        overflow: hidden;
+        white-space: nowrap;
+        cursor: pointer;
+      }
+      .task-btn.pressed {
+        border-color: var(--gray-darker) var(--white) var(--white)
+          var(--gray-darker);
+        background: #a9a9a9;
+      }
+      #clock {
+        border: 1px solid;
+        border-color: var(--gray-darker) var(--white) var(--white)
+          var(--gray-darker);
+        padding: 4px 10px;
+        font-size: 11.5px;
+        background: var(--gray);
+      }
+      #start-menu {
+        position: fixed;
+        left: 2px;
+        bottom: 36px;
+        width: 210px;
+        background: var(--gray);
+        border: 2px solid;
+        border-color: var(--white) var(--gray-darker) var(--gray-darker)
+          var(--white);
+        box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        z-index: 4500;
+        display: none;
+        flex-direction: column;
+        padding: 4px;
+      }
+      #start-menu.open {
+        display: flex;
+      }
+      .sm-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 8px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+      .sm-item:hover {
+        background: var(--titlebar-a);
+        color: #fff;
+      }
+      .sm-sep {
+        height: 1px;
+        background: var(--gray-darker);
+        border-bottom: 1px solid var(--white);
+        margin: 4px 2px;
+      }
+
+      ::-webkit-scrollbar {
+        width: 16px;
+        height: 16px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--gray);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--gray);
+        border: 1px solid;
+        border-color: var(--white) var(--gray-darker) var(--gray-darker)
+          var(--white);
+      }
+
+      /* windows media player */
+      .win[data-id="video"] .win-body {
+        padding: 0;
+        background: #000;
+        display: flex;
+        flex-direction: column;
+      }
+      .wmp-screen {
+        flex: 1;
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .wmp-screen video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: #000;
+      }
+      .wmp-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 8px;
+        background: var(--gray);
+        border-top: 1px solid var(--gray-darker);
+      }
+      .wmp-slider {
+        -webkit-appearance: none;
+        appearance: none;
+        height: 4px;
+        background: var(--gray-darker);
+        border: 1px solid var(--white);
+        flex: 1;
+      }
+      .wmp-slider.wmp-vol {
+        flex: 0 0 70px;
+      }
+      .wmp-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 12px;
+        height: 16px;
+        background: var(--gray);
+        border: 2px solid;
+        border-color: var(--white) var(--gray-darker) var(--gray-darker)
+          var(--white);
+        cursor: pointer;
+      }
+      .win[data-id="gallery"] .win-body {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .slideshow {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .slideshow .stage {
+        position: relative;
+        flex: 1;
+        min-height: 0;
+        background: #000;
+        border: 2px solid;
+        border-color: var(--gray-darker) var(--white) var(--white)
+          var(--gray-darker);
+        overflow: hidden;
+      }
+      .slideshow .slide {
+        position: absolute;
+        inset: 0;
+        background-size: cover;
+        background-position: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+      .slideshow .slide.active {
+        opacity: 1;
+      }
+      .slideshow .caption {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 6px 10px;
+        background: rgba(0, 0, 0, 0.6);
+        color: #fff;
+        font-size: 11.5px;
+      }
+      .slideshow .nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .slideshow .dots {
+        display: flex;
+        gap: 5px;
+        justify-content: center;
+      }
+      .slideshow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--gray-dark);
+        cursor: pointer;
+      }
+      .slideshow .dot.active {
+        background: #000080;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="boot">
+      <div class="line" id="boot-l1">NO TRUE NAME (tm) BIOS v9.8</div>
+      <div class="line" id="boot-l2">
+        Verifying identity......... FAILED (expected)
+      </div>
+      <div class="line" id="boot-l3">Loading four strangers into one band</div>
+      <div class="line" id="boot-l4">
+        Starting NO-TRUE-NAME-OS<span class="cursor"></span>
+      </div>
+      <div class="hint" id="boot-hint">click anywhere to continue</div>
+    </div>
+    <img
+      style="height: 90vh; display: block; margin: auto"
+      src="./assets/images/windows_NTN.svg"
+      alt=""
+    />
+
+    <div id="crt"></div>
+
+    <div id="desktop-icons"></div>
+    <div id="windows"></div>
+
+    <div id="start-menu">
+      <div class="sm-item" data-open="about">📄 About</div>
+      <div class="sm-item" data-open="music">🎵 Music</div>
+      <div class="sm-item" data-open="video">🎬 Video</div>
+      <div class="sm-item" data-open="band">🎤 Meet the Band</div>
+      <div class="sm-item" data-open="tour">📅 Tour Dates</div>
+      <div class="sm-item" data-open="gallery">📷 Photo Gallery</div>
+      <div class="sm-item" data-open="contact">✉️ Contact</div>
+      <div class="sm-sep"></div>
+      <div class="sm-item" data-open="mycomputer">💻 My Computer</div>
+      <div class="sm-item" data-open="identity">🎭 IDENTITY.EXE</div>
+      <div class="sm-item" data-open="recycle">🗑️ Recycle Bin</div>
+      <div class="sm-sep"></div>
+      <div class="sm-item" id="shutdown-item">⏻ Shut Down...</div>
+    </div>
+
+    <div id="taskbar">
+      <div id="start-btn" class="btn98"><span class="flag">🪟</span> Start</div>
+      <div id="task-buttons"></div>
+      <div id="clock">00:00</div>
+    </div>
+
+    <script>
+      (function () {
+        /* ============ CONTENT DATA ============ */
+        const windowsData = [
+          {
+            id: "about",
+            title: "ABOUT.TXT - Notepad",
+            icon: "📄",
+            x: 40,
+            y: 30,
+            w: 380,
+            h: 270,
+            defaultOpen: true,
+            screenPosition: { x: 40, y: 30 },
+            content: `
+        <h2>no true name</h2>
+        <p>No True Name are a Liverpool-based pop-punk/rock band formed in 2026, built for the outsiders.</p>
+        <p>Falling somewhere between Y2K emo nostalgia, loud guitars and the kind of feelings you probably shouldn't say out loud, No True Name make music for anyone who's ever felt like they don't belong. Their sound pulls from the raw energy of early-2000s emo and pop-punk, mixing catchy hooks with honest, emotionally charged songwriting.</p>
+        <p>Currently recording their debut EP, the band are creating more than just music. They're creating a place to belong. No True Name is for the misfits, the overthinkers, the people who never quite found their crowd.</p>
+        <p>You don't have to fit the mould. You just have to find your people.</p>
+        <p><strong>We are NO TRUE NAME.</strong></p>
+      `,
+          },
+          {
+            id: "music",
+            title: "Media Player - no true name",
+            icon: "🎵",
+            x: 450,
+            y: 60,
+            w: 360,
+            h: 330,
+            defaultOpen: true,
+            screenPosition: { x: 450, y: 60 },
+            content: `
+        <h2>Unreleased EP Tracklist</h2>
+        <div class="track-row"><span>1. The Shush Game</span><span>—</span></div>
+        <div class="track-row"><span>2. Don't Stop</span><span>—</span></div>
+        <div class="track-row"><span>3. Satisfy</span><span>—</span></div>
+        <div class="track-row"><span>4. Loathing</span><span>—</span></div>
+        <p style="margin-top:10px;">Streaming links TBD.</p>
+      `,
+          },
+          {
+            id: "band",
+            title: "MEET_THE_BAND.EXE",
+            icon: "🎤",
+            x: 70,
+            y: 340,
+            w: 430,
+            h: 330,
+            defaultOpen: true,
+            screenPosition: { x: 70, y: 340 },
+            content: `
+        <div class="member-card" data-member="kara">
+          <div class="avatar">🎙️</div>
+          <div><h3>KARA &mdash; Vocals</h3><p>Lead vocals and all the feelings.</p></div>
+        </div>
+        <div class="member-card" data-member="nikki">
+          <div class="avatar">🎸</div>
+          <div><h3>NIKKI &mdash; Guitar</h3><p>Riff maker. Noise lover. Instigator.</p></div>
+        </div>
+        <div class="member-card" data-member="roisin">
+          <div class="avatar">🥁</div>
+          <div><h3>ROISIN &mdash; Drums</h3><p>Keeping the chaos on time.</p></div>
+        </div>
+      `,
+          },
+          {
+            id: "bio-kara",
+            title: "KARA - BIO",
+            icon: "🎙️",
+            x: 430,
+            y: 70,
+            w: 460,
+            h: 520,
+            defaultOpen: false,
+            screenPosition: { x: 430, y: 70 },
+            content: `
+        <div class="bio-shot"><img src="assets/images/bios/KARA_Final.jpg" alt="Kara bio portrait" /></div>
+      `,
+          },
+          {
+            id: "bio-nikki",
+            title: "NIKKI - BIO",
+            icon: "🎸",
+            x: 470,
+            y: 100,
+            w: 460,
+            h: 520,
+            defaultOpen: false,
+            screenPosition: { x: 470, y: 100 },
+            content: `
+        <div class="bio-shot"><img src="assets/images/bios/NIKKI_Final.jpg" alt="Nikki bio portrait" /></div>
+      `,
+          },
+          {
+            id: "bio-roisin",
+            title: "ROISIN - BIO",
+            icon: "🥁",
+            x: 510,
+            y: 130,
+            w: 460,
+            h: 520,
+            defaultOpen: false,
+            screenPosition: { x: 510, y: 130 },
+            content: `
+        <div class="bio-shot"><img src="assets/images/bios/ROISIN_Final.jpg" alt="Roisin bio portrait" /></div>
+      `,
+          },
+          {
+            id: "tour",
+            title: "Tour Dates - Calendar",
+            icon: "📅",
+            x: 540,
+            y: 430,
+            w: 430,
+            h: 290,
+            defaultOpen: true,
+            screenPosition: { x: 540, y: 430 },
+            content: `
+        <table class="retro">
+          <tr><th>Event</th><th>Date</th><th>Venue</th><th>Tickets</th></tr>
+          <tr>
+            <td>TurnTable's Christmas Party 2026</td>
+            <td>Thursday 10th December 2026</td>
+            <td>The Jacaranda Liverpool</td>
+            <td><a class="link98" href="https://www.skiddle.com/whats-on/Liverpool/The-Jacaranda-Club/TurnTables-Christmas-Party-2026/42630558/" target="_blank" rel="noreferrer">Link</a></td>
+          </tr>
+        </table>
+      `,
+          },
+          {
+            id: "gallery",
+            title: "Photo Viewer",
+            icon: "📷",
+            x: 170,
+            y: 120,
+            w: 460,
+            h: 400,
+            defaultOpen: true,
+            screenPosition: { x: 170, y: 120 },
+            content: `
+  <div class="slideshow">
+    <div class="stage" id="ss-stage">
+      <div class="slide active" style="background-image:url('assets/images/SATURATION_1.jpg');">
+        <div class="caption">Load-in, 4am</div>
+      </div>
+      <div class="slide active" style="background-image:url('assets/images/GRUNGE_1.jpg');">
+        <div class="caption">first show, liverpool</div>
+      </div>
+      <div class="slide active" style="background-image:url('assets/images/GRUNGE_3.jpg');">
+        <div class="caption">Backstage, nowhere in particular</div>
+      </div>
+      <div class="slide active" style="background-image:url('assets/images/GRUNGE_2.jpg');">
+        <div class="caption">Merch table chaos</div>
+      </div>
+      <div class="slide active" style="background-image:url('assets/images/GRUNGE_2.jpg');">
+        <div class="caption">Encore</div>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="btn98" id="ss-prev">◀ Prev</button>
+      <div class="dots" id="ss-dots"></div>
+      <button class="btn98" id="ss-next">Next ▶</button>
+    </div>
+  </div>
+`,
+          },
+          {
+            id: "contact",
+            title: "Inbox - Outlook Express",
+            icon: "✉️",
+            x: 230,
+            y: 170,
+            w: 430,
+            h: 340,
+            defaultOpen: true,
+            screenPosition: { x: 370, y: 170 },
+            content: `
+        <div class="inbox-toolbar">
+          <button class="btn98" onclick="location.href='mailto:notruename.official@gmail.com'">✉ New Message</button>
+        </div>
+        <p><b>To:</b> notruename.official@gmail.com</p>
+        <div class="social-row"><span>Instagram</span><a class="link98" href="https://www.instagram.com/notruename_official/" target="_blank" rel="noreferrer">@notruename_official</a></div>
+        <div class="social-row"><span>YouTube</span><a class="link98" href="https://www.youtube.com/@NOTRUENAME_OFFICIAL" target="_blank" rel="noreferrer">@NOTRUENAME_OFFICIAL</a></div>
+        <div class="social-row"><span>TikTok</span><a class="link98" href="https://www.tiktok.com/@notruename_official" target="_blank" rel="noreferrer">@notruename_official</a></div>
+        <div class="social-row"><span>Email</span><a class="link98" href="mailto:notruename.official@gmail.com">notruename.official@gmail.com</a></div>
+        <p style="margin-top:8px; color:#666; font-size:11px;">Streaming links TBD.</p>
+      `,
+          },
+          {
+            id: "mycomputer",
+            title: "My Computer",
+            icon: "💻",
+            x: 300,
+            y: 90,
+            w: 400,
+            h: 300,
+            defaultOpen: false,
+            screenPosition: { x: 300, y: 90 },
+            content: `
+        <div class="folder-item" data-detail="d1">🗀 Demos (unfinished)</div>
+        <div class="folder-item" data-detail="d2">🗀 Riffs 2019&ndash;2026</div>
+        <div class="folder-item" data-detail="d3">🗀 Merch Ideas</div>
+        <div class="folder-item" data-detail="d4">🗀 Band Meeting Minutes</div>
+        <div class="folder-detail" id="d1">47 files. 46 are the same song. The 47th is a voicemail.</div>
+        <div class="folder-detail" id="d2">Sorted by "promising." None promoted.</div>
+        <div class="folder-detail" id="d3">One (1) shirt design approved. Forty (40) rejected, mostly for legal reasons.</div>
+        <div class="folder-detail" id="d4">No minutes were taken. No meetings were had.</div>
+      `,
+          },
+          {
+            id: "recycle",
+            title: "Recycle Bin",
+            icon: "🗑️",
+            x: 360,
+            y: 200,
+            w: 360,
+            h: 300,
+            defaultOpen: false,
+            screenPosition: { x: 360, y: 200 },
+            content: `
+        <p style="font-weight:bold;">Deleted Band Names.txt</p>
+        <ul>
+          <li>KOTODAMA</li>
+          <li>BLØODLINE</li>
+          <li>NØMAD</li>
+          <li>NO VOWS</li>
+        </ul>
+      `,
+          },
+          {
+            id: "identity",
+            title: "IDENTITY.EXE",
+            icon: "🎭",
+            x: 420,
+            y: 260,
+            w: 380,
+            h: 290,
+            defaultOpen: false,
+            screenPosition: { x: 420, y: 260 },
+            content: `
+        <p>Nobody in this band has ever used their real name twice. Neither should you.</p>
+        <button class="btn98" id="gen-identity-btn">Generate New Identity</button>
+        <div id="identity-out">&gt; awaiting input_</div>
+      `,
+          },
+          {
+            id: "video",
+            title: "Windows Media Player - no true name",
+            icon: "🎬",
+            x: 260,
+            y: 130,
+            w: 440,
+            h: 360,
+            defaultOpen: true,
+            screenPosition: { x: 900, y: 130 },
+            content: `
+    <div class="wmp-screen">
+      <video id="wmp-video" src="assets/videos/never-meant-to-be.mp4" preload="metadata"></video>
+    </div>
+    <div class="wmp-controls">
+      <button class="btn98" id="wmp-play">▶</button>
+      <input type="range" id="wmp-seek" min="0" max="100" value="0" class="wmp-slider">
+      <span>🔊</span>
+      <input type="range" id="wmp-volume" min="0" max="100" value="80" class="wmp-slider wmp-vol">
+    </div>
+  `,
+          },
+        ];
+
+        const easterEggIds = ["mycomputer", "recycle", "identity"];
+
+        /* ============ STATE ============ */
+        const state = {}; // id -> {open, minimized, el}
+        let zTop = 100;
+        let activeId = null;
+
+        const winContainer = document.getElementById("windows");
+        const iconContainer = document.getElementById("desktop-icons");
+        const taskButtons = document.getElementById("task-buttons");
+
+        /* ============ BUILD DESKTOP ICONS ============ */
+        windowsData.forEach((w) => {
+          const ic = document.createElement("div");
+          ic.className = "icon";
+          ic.tabIndex = 0;
+          ic.innerHTML = `<div class="glyph">${w.icon}</div><div class="label">${w.title.split(" - ")[0].split(".EXE")[0]}</div>`;
+          ic.addEventListener("dblclick", () => openWindow(w.id));
+          ic.addEventListener("click", (e) => {
+            document
+              .querySelectorAll(".icon")
+              .forEach((i) => i.classList.remove("selected"));
+            ic.classList.add("selected");
+          });
+          ic.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") openWindow(w.id);
+          });
+          iconContainer.appendChild(ic);
+        });
+
+        document.getElementById("desktop-icons").parentElement === null; // no-op guard
+        document.body.addEventListener("click", (e) => {
+          if (!e.target.closest(".icon"))
+            document
+              .querySelectorAll(".icon")
+              .forEach((i) => i.classList.remove("selected"));
+        });
+
+        /* ============ BUILD WINDOWS ============ */
+        windowsData.forEach((w) => {
+          const el = document.createElement("div");
+          const pos = w.screenPosition ?? { x: w.x ?? 0, y: w.y ?? 0 };
+          el.className = "win hidden";
+          el.style.left = pos.x + "px";
+          el.style.top = pos.y + "px";
+          el.style.width = w.w + "px";
+          el.style.height = w.h + "px";
+          el.dataset.id = w.id;
+          el.innerHTML = `
+      <div class="title-bar">
+        <div class="t-left"><span class="t-icon">${w.icon}</span><span class="t-text">${w.title}</span></div>
+        <div class="t-buttons">
+          <button class="t-btn" data-act="min">_</button>
+          <button class="t-btn" data-act="close">✕</button>
+        </div>
+      </div>
+      <div class="win-body">${w.content}</div>
+      <div class="resize-handle"></div>
+    `;
+          winContainer.appendChild(el);
+          state[w.id] = { open: false, minimized: false, el, data: w };
+
+          // drag
+          const titleBar = el.querySelector(".title-bar");
+          let dragging = false,
+            offX = 0,
+            offY = 0;
+          titleBar.addEventListener("mousedown", (e) => {
+            if (e.target.closest(".t-btn")) return;
+            dragging = true;
+            focusWindow(w.id);
+            offX = e.clientX - el.offsetLeft;
+            offY = e.clientY - el.offsetTop;
+            e.preventDefault();
+          });
+          window.addEventListener("mousemove", (e) => {
+            if (!dragging) return;
+            let nx = e.clientX - offX,
+              ny = e.clientY - offY;
+            nx = Math.max(0, Math.min(nx, window.innerWidth - 60));
+            ny = Math.max(0, Math.min(ny, window.innerHeight - 60));
+            el.style.left = nx + "px";
+            el.style.top = ny + "px";
+          });
+          window.addEventListener("mouseup", () => (dragging = false));
+
+          // resize
+          const handle = el.querySelector(".resize-handle");
+          let resizing = false,
+            startW = 0,
+            startH = 0,
+            startX = 0,
+            startY = 0;
+          handle.addEventListener("mousedown", (e) => {
+            resizing = true;
+            focusWindow(w.id);
+            startW = el.offsetWidth;
+            startH = el.offsetHeight;
+            startX = e.clientX;
+            startY = e.clientY;
+            e.preventDefault();
+            e.stopPropagation();
+          });
+          window.addEventListener("mousemove", (e) => {
+            if (!resizing) return;
+            el.style.width =
+              Math.max(220, startW + (e.clientX - startX)) + "px";
+            el.style.height =
+              Math.max(140, startH + (e.clientY - startY)) + "px";
+          });
+          window.addEventListener("mouseup", () => (resizing = false));
+
+          el.addEventListener("mousedown", () => focusWindow(w.id));
+          el.querySelector('[data-act="min"]').addEventListener("click", () =>
+            minimizeWindow(w.id),
+          );
+          el.querySelector('[data-act="close"]').addEventListener("click", () =>
+            closeWindow(w.id),
+          );
+        });
+
+        /* ============ WINDOW ACTIONS ============ */
+        function focusWindow(id) {
+          const s = state[id];
+          if (!s || s.minimized) return;
+          zTop++;
+          s.el.style.zIndex = zTop;
+          document
+            .querySelectorAll(".title-bar")
+            .forEach((tb) => tb.classList.remove("active"));
+          s.el.querySelector(".title-bar").classList.add("active");
+          activeId = id;
+          updateTaskbarPressed();
+        }
+
+        function openWindow(id) {
+          const s = state[id];
+          if (!s) return;
+          s.open = true;
+          s.minimized = false;
+          s.el.classList.remove("hidden");
+          ensureTaskButton(id);
+          focusWindow(id);
+        }
+
+        function closeWindow(id) {
+          const s = state[id];
+          if (!s) return;
+          s.open = false;
+          s.minimized = false;
+          s.el.classList.add("hidden");
+          removeTaskButton(id);
+        }
+
+        function minimizeWindow(id) {
+          const s = state[id];
+          if (!s) return;
+          s.minimized = true;
+          s.el.classList.add("hidden");
+          updateTaskbarPressed();
+        }
+
+        function toggleFromTaskbar(id) {
+          const s = state[id];
+          if (!s) return;
+          if (s.minimized || s.el.classList.contains("hidden")) {
+            s.minimized = false;
+            s.el.classList.remove("hidden");
+            focusWindow(id);
+          } else if (activeId === id) {
+            minimizeWindow(id);
+          } else {
+            focusWindow(id);
+          }
+        }
+
+        /* ============ TASKBAR ============ */
+        const taskBtnEls = {};
+        function ensureTaskButton(id) {
+          if (taskBtnEls[id]) return;
+          const s = state[id];
+          const btn = document.createElement("div");
+          btn.className = "task-btn";
+          btn.innerHTML = `<span>${s.data.icon}</span><span>${s.data.title.split(" - ")[0]}</span>`;
+          btn.addEventListener("click", () => toggleFromTaskbar(id));
+          taskButtons.appendChild(btn);
+          taskBtnEls[id] = btn;
+        }
+        function removeTaskButton(id) {
+          if (taskBtnEls[id]) {
+            taskBtnEls[id].remove();
+            delete taskBtnEls[id];
+          }
+        }
+        function updateTaskbarPressed() {
+          Object.keys(taskBtnEls).forEach((id) => {
+            taskBtnEls[id].classList.toggle(
+              "pressed",
+              id === activeId && !state[id].minimized,
+            );
+          });
+        }
+
+        /* ============ CLOCK ============ */
+        function tickClock() {
+          const now = new Date();
+          let h = now.getHours();
+          const m = now.getMinutes();
+          const ampm = h >= 12 ? "PM" : "AM";
+          h = h % 12;
+          if (h === 0) h = 12;
+          document.getElementById("clock").textContent =
+            `${h}:${m.toString().padStart(2, "0")} ${ampm}`;
+        }
+        tickClock();
+        setInterval(tickClock, 15000);
+
+        /* ============ MEMBER BIO CLICK HANDLERS ============ */
+        document.querySelectorAll(".member-card").forEach((card) => {
+          card.addEventListener("click", () => {
+            const member = card.dataset.member;
+            if (!member) return;
+            openWindow(`bio-${member}`);
+          });
+        });
+
+        /* ============ START MENU ============ */
+        const startMenu = document.getElementById("start-menu");
+        document.getElementById("start-btn").addEventListener("click", (e) => {
+          startMenu.classList.toggle("open");
+          e.stopPropagation();
+        });
+        document.body.addEventListener("click", (e) => {
+          if (
+            !e.target.closest("#start-menu") &&
+            !e.target.closest("#start-btn")
+          )
+            startMenu.classList.remove("open");
+        });
+        startMenu.querySelectorAll("[data-open]").forEach((item) => {
+          item.addEventListener("click", () => {
+            openWindow(item.dataset.open);
+            startMenu.classList.remove("open");
+          });
+        });
+        document
+          .getElementById("shutdown-item")
+          .addEventListener("click", () => {
+            startMenu.classList.remove("open");
+            alert("You can't shut down a band this good. Nice try though.");
+          });
+
+        /* ============ EASTER EGGS ============ */
+        // My Computer folders
+        winContainer.addEventListener("click", (e) => {
+          const item = e.target.closest(".folder-item");
+          if (item) {
+            const detailId = item.dataset.detail;
+            const win = item.closest(".win");
+            win
+              .querySelectorAll(".folder-detail")
+              .forEach(
+                (d) => (d.style.display = d.id === detailId ? "block" : "none"),
+              );
+          }
+        });
+
+        let ssIndex = 0,
+          ssTimer = null;
+        function ssSetup() {
+          const stage = document.getElementById("ss-stage");
+          if (!stage || stage.dataset.wired) return; // only wire once, when window exists in DOM
+          stage.dataset.wired = "1";
+          const slides = stage.querySelectorAll(".slide");
+          const dotsWrap = document.getElementById("ss-dots");
+          slides.forEach((_, i) => {
+            const d = document.createElement("div");
+            d.className = "dot" + (i === 0 ? " active" : "");
+            d.addEventListener("click", () => ssGoTo(i));
+            dotsWrap.appendChild(d);
+          });
+          document
+            .getElementById("ss-prev")
+            .addEventListener("click", () => ssGoTo(ssIndex - 1));
+          document
+            .getElementById("ss-next")
+            .addEventListener("click", () => ssGoTo(ssIndex + 1));
+          ssAutoplay();
+        }
+        function ssGoTo(i) {
+          const stage = document.getElementById("ss-stage");
+          const slides = stage.querySelectorAll(".slide");
+          const dots = document.querySelectorAll("#ss-dots .dot");
+          ssIndex = (i + slides.length) % slides.length;
+          slides.forEach((s, idx) =>
+            s.classList.toggle("active", idx === ssIndex),
+          );
+          dots.forEach((d, idx) =>
+            d.classList.toggle("active", idx === ssIndex),
+          );
+        }
+        function ssAutoplay() {
+          clearInterval(ssTimer);
+          ssTimer = setInterval(() => ssGoTo(ssIndex + 1), 4000);
+        }
+        // re-run setup each time the gallery window opens
+        const origOpen = openWindow;
+        openWindow = function (id) {
+          origOpen(id);
+          if (id === "gallery") setTimeout(ssSetup, 0);
+        };
+
+        function openDefaultWindowsSequentially() {
+          const defaultWindows = windowsData.filter((w) => w.defaultOpen);
+          let delayAccumulator = 0;
+
+          defaultWindows.forEach((w) => {
+            delayAccumulator += 50 + Math.random() * 700;
+            setTimeout(() => openWindow(w.id), delayAccumulator);
+          });
+        }
+
+        // IDENTITY.exe generator
+        const titles = [
+          "The Reluctant",
+          "Doctor",
+          "Agent",
+          "Sister",
+          "Uncle",
+          "Saint",
+          "Comrade",
+          "Deputy",
+          "The Understudy",
+          "Captain",
+        ];
+        const nouns = [
+          "Static",
+          "Undertow",
+          "Rumor",
+          "Vacancy",
+          "Echo",
+          "Alibi",
+          "Nobody",
+          "Payphone",
+          "Weekday",
+          "Understudy",
+        ];
+        const facts = [
+          "Plays left-handed on a right-handed guitar, out of principle.",
+          "Has been kicked out of exactly one country, for singing.",
+          "Only answers to this name on Tuesdays.",
+          "Once fronted three different bands in the same night.",
+          "Claims to have written this song. Cannot prove it.",
+          "Is, allegedly, also in the audience right now.",
+        ];
+        winContainer.addEventListener("click", (e) => {
+          if (e.target.id === "gen-identity-btn") {
+            const t = titles[Math.floor(Math.random() * titles.length)];
+            const n = nouns[Math.floor(Math.random() * nouns.length)];
+            const f = facts[Math.floor(Math.random() * facts.length)];
+            const out = e.target.parentElement.querySelector("#identity-out");
+            out.textContent = `> identity confirmed: "${t} ${n}"\n> ${f}`;
+          }
+        });
+
+        // windows media player wiring
+        const wmpVideo = document.getElementById("wmp-video");
+        if (wmpVideo) {
+          const wmpPlay = document.getElementById("wmp-play");
+          const wmpSeek = document.getElementById("wmp-seek");
+          const wmpVolume = document.getElementById("wmp-volume");
+          wmpVideo.volume = 0.8;
+
+          wmpPlay.addEventListener("click", () => {
+            if (wmpVideo.paused) {
+              wmpVideo.play();
+              wmpPlay.textContent = "⏸";
+            } else {
+              wmpVideo.pause();
+              wmpPlay.textContent = "▶";
+            }
+          });
+          wmpVideo.addEventListener("timeupdate", () => {
+            if (wmpVideo.duration)
+              wmpSeek.value = (wmpVideo.currentTime / wmpVideo.duration) * 100;
+          });
+          wmpSeek.addEventListener("input", () => {
+            if (wmpVideo.duration)
+              wmpVideo.currentTime = (wmpSeek.value / 100) * wmpVideo.duration;
+          });
+          wmpVolume.addEventListener("input", () => {
+            wmpVideo.volume = wmpVolume.value / 100;
+          });
+          wmpVideo.addEventListener("ended", () => (wmpPlay.textContent = "▶"));
+        }
+
+        /* ============ BOOT ============ */
+        function boot() {
+          const lines = ["boot-l1", "boot-l2", "boot-l3", "boot-l4"];
+          lines.forEach((id, i) => {
+            setTimeout(() => {
+              document.getElementById(id).style.opacity = 1;
+            }, 450 * i);
+          });
+          setTimeout(
+            () => {
+              document.getElementById("boot-hint").style.opacity = 1;
+            },
+            450 * lines.length + 300,
+          );
+        }
+        boot();
+
+        let bootFinished = false;
+
+        function finishBoot() {
+          if (bootFinished) return;
+          bootFinished = true;
+
+          document.getElementById("boot").style.display = "none";
+
+          // play start noise
+          const audio = new Audio("assets/audio/render.mp3");
+          audio.play().catch(() => {});
+
+          openDefaultWindowsSequentially();
+        }
+        document.getElementById("boot").addEventListener("click", finishBoot);
+        setTimeout(finishBoot, 5000);
+      })();
+    </script>
+  </body>
+</html>
