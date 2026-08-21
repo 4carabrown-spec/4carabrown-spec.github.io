@@ -156,6 +156,12 @@
         min-width: 180px;
         min-height: 120px;
       }
+      @media (max-width: 600px) {
+        .win {
+          min-width: 140px;
+          min-height: 100px;
+        }
+      }
       .win.hidden {
         display: none;
       }
@@ -171,6 +177,7 @@
         align-items: center;
         justify-content: space-between;
         cursor: default;
+        touch-action: none;
         font-weight: bold;
         letter-spacing: 0.3px;
       }
@@ -264,6 +271,7 @@
         width: 14px;
         height: 14px;
         cursor: nwse-resize;
+        touch-action: none;
       }
 
       /* ---------- buttons / inputs, 98-ish ---------- */
@@ -694,7 +702,7 @@
       <div class="sm-item" data-open="contact">✉️ Contact</div>
       <div class="sm-sep"></div>
       <div class="sm-item" data-open="mycomputer">💻 My Computer</div>
-      <div class="sm-item" data-open="identity">🎭 IDENTITY.EXE</div>
+      <div class="sm  -item" data-open="identity">🎭 IDENTITY.EXE</div>
       <div class="sm-item" data-open="recycle">🗑️ Recycle Bin</div>
       <div class="sm-sep"></div>
       <div class="sm-item" id="shutdown-item">⏻ Shut Down...</div>
@@ -988,6 +996,56 @@
         const iconContainer = document.getElementById("desktop-icons");
         const taskButtons = document.getElementById("task-buttons");
 
+        function isMobileViewport() {
+          return window.innerWidth <= 600;
+        }
+
+        const mobileWindowDimensions = {
+          about: { width: 190, height: 280 },
+          band: { width: 210, height: 340 },
+          contact: { width: 210, height: 300 },
+        };
+
+        function clampWindowPosition(el, x, y) {
+          const visibleWidth = el.offsetWidth * 0.3;
+          const visibleHeight = el.offsetHeight * 0.3;
+          const taskbarHeight = document.getElementById("taskbar").offsetHeight;
+          const maxTop = Math.max(0, window.innerHeight - taskbarHeight - visibleHeight);
+          return {
+            x: Math.max(-el.offsetWidth * 0.7, Math.min(x, window.innerWidth - visibleWidth)),
+            y: Math.max(-el.offsetHeight * 0.7, Math.min(y, maxTop)),
+          };
+        }
+
+        function resizeWindowsForViewport() {
+          Object.values(state).forEach((s) => {
+            const { el, data } = s;
+            if (isMobileViewport()) {
+              const mobileDimensions = mobileWindowDimensions[data.id];
+              el.style.width = Math.max(
+                140,
+                Math.min(
+                  mobileDimensions?.width ?? data.w * 0.5,
+                  window.innerWidth * 0.9,
+                ),
+              ) + "px";
+              el.style.height = Math.max(
+                100,
+                Math.min(
+                  mobileDimensions?.height ?? data.h * 0.5,
+                  (window.innerHeight - 34) * 0.78,
+                ),
+              ) + "px";
+            } else {
+              el.style.width = data.w + "px";
+              el.style.height = data.h + "px";
+            }
+            const position = clampWindowPosition(el, el.offsetLeft, el.offsetTop);
+            el.style.left = position.x + "px";
+            el.style.top = position.y + "px";
+          });
+        }
+
         /* ============ BUILD DESKTOP ICONS ============ */
         windowsData.forEach((w) => {
           const ic = document.createElement("div");
@@ -1038,30 +1096,42 @@
     `;
           winContainer.appendChild(el);
           state[w.id] = { open: false, minimized: false, el, data: w };
+          resizeWindowsForViewport();
 
           // drag
           const titleBar = el.querySelector(".title-bar");
           let dragging = false,
             offX = 0,
-            offY = 0;
-          titleBar.addEventListener("mousedown", (e) => {
+            offY = 0,
+            dragPointerId = null;
+          titleBar.addEventListener("pointerdown", (e) => {
             if (e.target.closest(".t-btn")) return;
             dragging = true;
+            dragPointerId = e.pointerId;
             focusWindow(w.id);
             offX = e.clientX - el.offsetLeft;
             offY = e.clientY - el.offsetTop;
+            titleBar.setPointerCapture(e.pointerId);
             e.preventDefault();
           });
-          window.addEventListener("mousemove", (e) => {
-            if (!dragging) return;
-            let nx = e.clientX - offX,
-              ny = e.clientY - offY;
-            nx = Math.max(0, Math.min(nx, window.innerWidth - 60));
-            ny = Math.max(0, Math.min(ny, window.innerHeight - 60));
-            el.style.left = nx + "px";
-            el.style.top = ny + "px";
+          titleBar.addEventListener("pointermove", (e) => {
+            if (!dragging || e.pointerId !== dragPointerId) return;
+            const position = clampWindowPosition(
+              el,
+              e.clientX - offX,
+              e.clientY - offY,
+            );
+            el.style.left = position.x + "px";
+            el.style.top = position.y + "px";
           });
-          window.addEventListener("mouseup", () => (dragging = false));
+          titleBar.addEventListener("pointerup", () => {
+            dragging = false;
+            dragPointerId = null;
+          });
+          titleBar.addEventListener("pointercancel", () => {
+            dragging = false;
+            dragPointerId = null;
+          });
 
           // resize
           const handle = el.querySelector(".resize-handle");
@@ -1097,6 +1167,8 @@
             closeWindow(w.id),
           );
         });
+
+        window.addEventListener("resize", resizeWindowsForViewport);
 
         /* ============ WINDOW ACTIONS ============ */
         function focusWindow(id) {
