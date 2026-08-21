@@ -1040,9 +1040,11 @@
               el.style.width = data.w + "px";
               el.style.height = data.h + "px";
             }
-            const position = clampWindowPosition(el, el.offsetLeft, el.offsetTop);
-            el.style.left = position.x + "px";
-            el.style.top = position.y + "px";
+            if (isMobileViewport()) {
+              const position = clampWindowPosition(el, el.offsetLeft, el.offsetTop);
+              el.style.left = position.x + "px";
+              el.style.top = position.y + "px";
+            }
           });
         }
 
