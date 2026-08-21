@@ -1006,6 +1006,22 @@
           contact: { width: 210, height: 300 },
         };
 
+        const mobileWindowPositions = {
+          about: { x: 18, y: 48 },
+          music: { x: 178, y: 92 },
+          band: { x: 42, y: 310 },
+          "bio-kara": { x: 210, y: 24 },
+          "bio-nikki": { x: 8, y: 190 },
+          "bio-roisin": { x: 164, y: 360 },
+          tour: { x: 116, y: 500 },
+          gallery: { x: 24, y: 150 },
+          contact: { x: 176, y: 250 },
+          mycomputer: { x: 70, y: 420 },
+          recycle: { x: 220, y: 470 },
+          identity: { x: 14, y: 580 },
+          video: { x: 96, y: 22 },
+        };
+
         function clampWindowPosition(el, x, y) {
           const visibleWidth = el.offsetWidth * 0.3;
           const visibleHeight = el.offsetHeight * 0.3;
@@ -1041,9 +1057,17 @@
               el.style.height = data.h + "px";
             }
             if (isMobileViewport()) {
-              const position = clampWindowPosition(el, el.offsetLeft, el.offsetTop);
-              el.style.left = position.x + "px";
-              el.style.top = position.y + "px";
+              const mobilePosition = mobileWindowPositions[data.id];
+              if (mobilePosition && !el.dataset.mobilePositioned) {
+                el.style.left = mobilePosition.x + "px";
+                el.style.top = mobilePosition.y + "px";
+                el.dataset.mobilePositioned = "true";
+              }
+              if (el.offsetWidth && el.offsetHeight) {
+                const position = clampWindowPosition(el, el.offsetLeft, el.offsetTop);
+                el.style.left = position.x + "px";
+                el.style.top = position.y + "px";
+              }
             }
           });
         }
