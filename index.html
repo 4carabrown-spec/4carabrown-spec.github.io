@@ -494,6 +494,17 @@
           var(--gray-darker);
         background: #a9a9a9;
       }
+      @media (max-width: 600px) {
+        .task-btn {
+          flex: 0 0 30px;
+          width: 30px;
+          justify-content: center;
+          padding: 2px;
+        }
+        .task-btn span:nth-child(2) {
+          display: none;
+        }
+      }
       #clock {
         border: 1px solid;
         border-color: var(--gray-darker) var(--white) var(--white)
@@ -1258,6 +1269,7 @@
           const s = state[id];
           const btn = document.createElement("div");
           btn.className = "task-btn";
+          btn.title = s.data.title;
           btn.innerHTML = `<span>${s.data.icon}</span><span>${s.data.title.split(" - ")[0]}</span>`;
           btn.addEventListener("click", () => toggleFromTaskbar(id));
           taskButtons.appendChild(btn);
