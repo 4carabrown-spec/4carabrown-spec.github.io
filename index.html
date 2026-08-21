@@ -678,6 +678,21 @@
       .slideshow .dot.active {
         background: #000080;
       }
+
+      @media (max-width: 600px) {
+        .desktop-wallpaper {
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          width: 110vw;
+          height: auto !important;
+          object-fit: contain;
+          margin: 0 !important;
+          transform: translate(-50%, -50%);
+          z-index: 0;
+          pointer-events: none;
+        }
+      }
     </style>
   </head>
   <body>
@@ -693,6 +708,7 @@
       <div class="hint" id="boot-hint">click anywhere to continue</div>
     </div>
     <img
+      class="desktop-wallpaper"
       style="height: 90vh; display: block; margin: auto"
       src="./assets/images/windows_NTN.svg"
       alt=""
