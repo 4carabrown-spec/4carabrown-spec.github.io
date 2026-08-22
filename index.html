@@ -18,6 +18,16 @@
         --titlebar-inactive-b: #000000;
         --desktop: #8d1818;
       }
+      @font-face {
+        font-family: "No Vacancy";
+        src: url("./fonts/novacancy-grunge.woff2") format("woff2");
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Skateboarder";
+        src: url("./fonts/Skateboarder.woff2") format("woff2");
+        font-display: swap;
+      }
       * {
         box-sizing: border-box;
       }
@@ -29,6 +39,7 @@
         height: 100%;
         font-family: Tahoma, "MS Sans Serif", Geneva, Arial, sans-serif;
         font-size: 12px;
+        font-weight: 100;
         overflow: hidden;
         -webkit-user-select: none;
         user-select: none;
@@ -131,6 +142,8 @@
         margin-bottom: 4px;
       }
       .icon .label {
+        font-family: "No Vacancy", Tahoma, "MS Sans Serif", Geneva, Arial,
+          sans-serif;
         color: #fff;
         text-align: center;
         font-size: 11px;
@@ -166,6 +179,8 @@
         display: none;
       }
       .title-bar {
+        font-family: "No Vacancy", Tahoma, "MS Sans Serif", Geneva, Arial,
+          sans-serif;
         background: linear-gradient(
           90deg,
           var(--titlebar-inactive-a),
@@ -243,6 +258,8 @@
         color: #fff;
       }
       .win-body {
+        font-family: "Skateboarder", Tahoma, "MS Sans Serif", Geneva, Arial,
+          sans-serif;
         flex: 1;
         overflow: auto;
         background: var(--white);
@@ -475,6 +492,8 @@
         height: 100%;
       }
       .task-btn {
+        font-family: "No Vacancy", Tahoma, "MS Sans Serif", Geneva, Arial,
+          sans-serif;
         background: var(--gray);
         border: 2px solid;
         border-color: var(--white) var(--gray-darker) var(--gray-darker)
