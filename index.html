@@ -638,6 +638,44 @@
         flex-direction: column;
       }
 
+      .paint-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+      .paint-color {
+        width: 30px;
+        height: 26px;
+        padding: 1px;
+        font-size: 18px;
+        line-height: 18px;
+      }
+      .paint-color.red-pencil {
+        color: #d00000;
+      }
+      .paint-color.active {
+        border-color: var(--gray-darker) var(--white) var(--white)
+          var(--gray-darker);
+      }
+      .paint-canvas-wrap {
+        flex: 1;
+        min-height: 0;
+        background: #fff;
+        border: 2px solid;
+        border-color: var(--gray-darker) var(--white) var(--white)
+          var(--gray-darker);
+        overflow: hidden;
+      }
+      .paint-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background: #fff;
+        cursor: crosshair;
+        touch-action: none;
+      }
+
       .slideshow {
         flex: 1;
         min-height: 0;
@@ -1050,6 +1088,27 @@
     </div>
   `,
           },
+          {
+            id: "paint",
+            title: "NTN Paint",
+            icon: "🖌️",
+            x: 320,
+            y: 180,
+            w: 430,
+            h: 340,
+            defaultOpen: true,
+            screenPosition: { x: 320, y: 180 },
+            content: `
+        <div class="paint-toolbar">
+          <button class="btn98 paint-color active" data-paint-color="#000000" aria-label="Black pencil" title="Black pencil">✎</button>
+          <button class="btn98 paint-color red-pencil" data-paint-color="#d00000" aria-label="Red pencil" title="Red pencil">✎</button>
+          <button class="btn98 paint-color" data-paint-action="clear" aria-label="Clear canvas" title="Clear canvas">🗑️</button>
+        </div>
+        <div class="paint-canvas-wrap">
+          <canvas class="paint-canvas" width="800" height="520"></canvas>
+        </div>
+      `,
+          },
         ];
 
         const easterEggIds = ["mycomputer", "recycle", "identity"];
@@ -1073,6 +1132,7 @@
           contact: { width: 210, height: 300 },
           gallery: { width: 280, height: 260 },
           tour: { width: 300, height: 190 },
+          paint: { width: 280, height: 250 },
         };
 
         const mobileWindowPositions = {
@@ -1089,6 +1149,7 @@
           recycle: { x: 220, y: 470 },
           identity: { x: 14, y: 580 },
           video: { x: 96, y: 22 },
+          paint: { x: 140, y: 330 },
         };
 
         function clampWindowPosition(el, x, y) {
@@ -1261,6 +1322,64 @@
           el.querySelector('[data-act="close"]').addEventListener("click", () =>
             closeWindow(w.id),
           );
+        });
+
+        document.querySelectorAll('[data-id="paint"]').forEach((paintWindow) => {
+          const canvas = paintWindow.querySelector(".paint-canvas");
+          const context = canvas.getContext("2d");
+          let paintColor = "#000000";
+          let painting = false;
+
+          context.fillStyle = "#ffffff";
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          context.lineCap = "round";
+          context.lineJoin = "round";
+          context.lineWidth = 6;
+
+          function canvasPoint(event) {
+            const bounds = canvas.getBoundingClientRect();
+            return {
+              x: ((event.clientX - bounds.left) / bounds.width) * canvas.width,
+              y: ((event.clientY - bounds.top) / bounds.height) * canvas.height,
+            };
+          }
+
+          canvas.addEventListener("pointerdown", (event) => {
+            painting = true;
+            canvas.setPointerCapture(event.pointerId);
+            const point = canvasPoint(event);
+            context.strokeStyle = paintColor;
+            context.beginPath();
+            context.moveTo(point.x, point.y);
+            context.lineTo(point.x + 0.01, point.y + 0.01);
+            context.stroke();
+            event.preventDefault();
+          });
+          canvas.addEventListener("pointermove", (event) => {
+            if (!painting) return;
+            const point = canvasPoint(event);
+            context.lineTo(point.x, point.y);
+            context.stroke();
+            event.preventDefault();
+          });
+          canvas.addEventListener("pointerup", () => (painting = false));
+          canvas.addEventListener("pointercancel", () => (painting = false));
+
+          paintWindow.querySelectorAll("[data-paint-color]").forEach((button) => {
+            button.addEventListener("click", () => {
+              paintColor = button.dataset.paintColor;
+              paintWindow
+                .querySelectorAll("[data-paint-color]")
+                .forEach((colorButton) => colorButton.classList.remove("active"));
+              button.classList.add("active");
+            });
+          });
+          paintWindow
+            .querySelector('[data-paint-action="clear"]')
+            .addEventListener("click", () => {
+              context.fillStyle = "#ffffff";
+              context.fillRect(0, 0, canvas.width, canvas.height);
+            });
         });
 
         window.addEventListener("resize", resizeWindowsForViewport);
