@@ -283,6 +283,11 @@
         border-bottom: 1px solid var(--gray-dark);
         padding-bottom: 4px;
       }
+      @media (min-width: 601px) {
+        .win-body {
+          zoom: 1.3;
+        }
+      }
       .resize-handle {
         position: absolute;
         right: 0;
@@ -851,9 +856,9 @@
             x: 450,
             y: 60,
             w: 360,
-            h: 330,
+            h: 250,
             defaultOpen: true,
-            screenPosition: { x: 450, y: 60 },
+            screenPosition: { x: 550, y: 40 },
             content: `
         <h2>Unreleased EP Tracklist</h2>
         <div class="track-row"><span>1. The Shush Game</span><span>—</span></div>
@@ -870,9 +875,9 @@
             x: 70,
             y: 340,
             w: 430,
-            h: 330,
+            h: 270,
             defaultOpen: true,
-            screenPosition: { x: 70, y: 340 },
+            screenPosition: { x: 20, y: 540 },
             content: `
         <div class="member-card" data-member="kara">
           <div class="avatar">🎙️</div>
@@ -937,9 +942,9 @@
             x: 540,
             y: 430,
             w: 430,
-            h: 290,
+            h: 150,
             defaultOpen: true,
-            screenPosition: { x: 540, y: 430 },
+            screenPosition: { x: 680, y: 650 },
             content: `
         <table class="retro">
           <tr><th>Event</th><th>Date</th><th>Venue</th><th>Tickets</th></tr>
@@ -996,9 +1001,9 @@
             x: 230,
             y: 170,
             w: 430,
-            h: 340,
+            h: 280,
             defaultOpen: true,
-            screenPosition: { x: 370, y: 170 },
+            screenPosition: { x: 500, y: 200 },
             content: `
         <div class="inbox-toolbar">
           <button class="btn98" onclick="location.href='mailto:notruename.official@gmail.com'">✉ New Message</button>
@@ -1077,7 +1082,7 @@
             w: 440,
             h: 360,
             defaultOpen: true,
-            screenPosition: { x: 900, y: 130 },
+            screenPosition: { x: 1100, y: 100 },
             content: `
     <div class="wmp-screen">
       <video id="wmp-video" src="assets/videos/never-meant-to-be.mp4" preload="metadata"></video>
@@ -1099,7 +1104,7 @@
             w: 430,
             h: 340,
             defaultOpen: true,
-            screenPosition: { x: 320, y: 180 },
+            screenPosition: { x: 1320, y: 480 },
             content: `
         <div class="paint-toolbar">
           <button class="btn98 paint-color active" data-paint-color="#000000" aria-label="Black pencil" title="Black pencil">✎</button>
@@ -1185,8 +1190,8 @@
                 ),
               ) + "px";
             } else {
-              el.style.width = data.w + "px";
-              el.style.height = data.h + "px";
+              el.style.width = data.w * 1.3 + "px";
+              el.style.height = data.h * 1.3 + "px";
             }
             if (isMobileViewport()) {
               const mobilePosition = mobileWindowPositions[data.id];
