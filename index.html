@@ -116,8 +116,10 @@
         z-index: 1;
         display: grid;
         grid-template-columns: 76px;
-        grid-auto-rows: 76px;
+        grid-template-rows: repeat(auto-fill, 76px);
+        grid-auto-flow: column;
         gap: 4px;
+        height: calc(100vh - 62px);
       }
       .icon {
         width: 72px;
@@ -863,7 +865,7 @@
           },
           {
             id: "band",
-            title: "MEET_THE_BAND.EXE",
+            title: "MEET_BAND.EXE",
             icon: "🎤",
             x: 70,
             y: 340,
